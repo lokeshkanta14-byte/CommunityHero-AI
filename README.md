@@ -1,20 +1,26 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+CommunityHero AI
 
-# Run and deploy your AI Studio app
+## AI-powered Civic Safety Platform
 
-This contains everything you need to run your app locally.
+CommunityHero AI is a smart civic safety platform built for the Google Vibe2Ship Hackathon.
 
-View your app in AI Studio: https://ai.studio/apps/2b02c77f-612e-4a0f-ba19-64c88a871bba
+### Features
+- Report Issues
+- Safe Journey
+- Building Guardian
+- AI-powered Issue Detection
+- Real-time Dashboard
+- Gemini AI Integration
 
-## Run Locally
+## Live Demo
+(https://community-hero-ai-581376438726.us-west1.run.app))
 
-**Prerequisites:**  Node.js
+## GitHub Repository
+[CommunityHero-AI Repository](https://github.com/lokeshkanta14-byte/CommunityHero-AI)
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Tech Stack
+- Google AI Studio
+- Gemini API
+- Firebase
+- TypeScript
+- Vite
