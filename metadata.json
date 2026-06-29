@@ -1,0 +1,6 @@
+{
+  "name": "Community Hero AI",
+  "description": "An AI-powered civic platform enabling citizens to report community issues and featuring a Smart Building Guardian for AI-assisted real fire CCTV verification.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

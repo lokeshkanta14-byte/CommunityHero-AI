@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Admin user identification matching app logic
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email != null && (
+               request.auth.token.email == 'lokeshkanta14@gmail.com' ||
+               request.auth.token.email.endsWith('@admin.com')
+             );
+    }
+
+    // Civic Issues validation rules
+    function isValidIssue(data) {
+      return data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 4000 &&
+             data.category is string &&
+             data.status is string &&
+             data.priority is string &&
+             data.reporterName is string &&
+             data.reporterEmail is string &&
+             data.reporterUid is string &&
+             data.latitude is number &&
+             data.longitude is number &&
+             data.address is string &&
+             data.upvotes is list &&
+             data.createdAt is string;
+    }
+
+    // --- issues Collection ---
+    match /issues/{issueId} {
+      // Allowed public reading so the dashboard can load listings for guest/unauthenticated views
+      allow read: if true;
+
+      // Creating a new civic issue report
+      allow create: if isValidId(issueId) && isValidIssue(request.resource.data) && (
+        // If authenticated via Firebase Auth, reporterUid must match their UID
+        (!isSignedIn() || request.resource.data.reporterUid == request.auth.uid)
+      );
+
+      // Updating an existing issue
+      allow update: if isValidId(issueId) && isValidIssue(request.resource.data) && (
+        // Tier 1: Real Firebase authenticated Admin can perform any valid update
+        isAdmin() ||
+        // Sandbox mock-admin compatibility: Allow updating status fields (any user acting as admin)
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory'])
+        ) ||
+        // Tier 2: Citizen upvoting or un-upvoting an issue
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes'])
+        )
+      );
+
+      // Deleting is restricted strictly to Admin users
+      allow delete: if isAdmin();
+    }
+
+    // --- Comments validation rules ---
+    function isValidComment(data) {
+      return data.issueId is string &&
+             data.userId is string &&
+             data.userName is string &&
+             data.text is string && data.text.size() <= 1000 &&
+             data.createdAt is string;
+    }
+
+    // --- comments Collection ---
+    match /comments/{commentId} {
+      // Comments are publicly readable
+      allow read: if true;
+
+      // Creating a comment
+      allow create: if isValidId(commentId) && isValidComment(request.resource.data) && (
+        // Ensure the associated civic issue document exists to avoid orphaned comments
+        exists(/databases/$(database)/documents/issues/$(request.resource.data.issueId))
+      ) && (
+        // If authenticated via Firebase Auth, userId must match their UID
+        (!isSignedIn() || request.resource.data.userId == request.auth.uid)
+      );
+
+      // Comments are immutable after posting, except for Admin cleanup
+      allow update, delete: if isAdmin();
+    }
+
+    // --- emergencies Collection ---
+    match /emergencies/{emergencyId} {
+      // Anyone can read and query emergency tickets
+      allow read: if true;
+      // Anyone can create emergency tickets
+      allow create: if isValidId(emergencyId);
+      // Anyone can update active emergency tickets
+      allow update: if isValidId(emergencyId);
+      // Deleting is restricted strictly to Admin users
+      allow delete: if isAdmin();
+    }
+  }
+}
